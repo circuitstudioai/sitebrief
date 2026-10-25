@@ -1,6 +1,7 @@
 'use client';
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
+import FeatureNav from './FeatureNav';
 import dynamic from 'next/dynamic';
 import { sampleBrief, type Brief, type Comparison, type ReferenceChoice } from '@/lib/sites/schema';
 const SiteMap = dynamic(() => import('./SiteMap'), { ssr: false, loading: () => <p className="map-loading">Loading the map…</p> });
@@ -73,7 +74,7 @@ export default function SiteDesk() {
   function download(){if(!result)return;const url=URL.createObjectURL(new Blob([memo(result)],{type:'text/plain;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='sitebrief-comparison.txt';a.click();URL.revokeObjectURL(url);}
   async function copy(){if(!result)return;try{await navigator.clipboard.writeText(memo(result));setCopied('Comparison copied.');}catch{setCopied('Copying is unavailable in this browser. Use Download comparison instead.');}}
   return <main id="main-content"><a className="skip-link" href="#brief-title">Skip to the comparison form</a>
-    <header className="masthead"><Link className="wordmark" href="/"><span className="mark" aria-hidden="true">s.</span>sitebrief<span className="wordmark-note" aria-hidden="true">RESTAURANT LOCATION COMPARISON</span></Link><a className="header-link" href="#method">How we compare ↗</a></header>
+    <header className="masthead"><Link className="wordmark" href="/"><span className="mark" aria-hidden="true">s.</span>sitebrief<span className="wordmark-note" aria-hidden="true">RESTAURANT LOCATION COMPARISON</span></Link><FeatureNav active="compare"/><a className="header-link" href="#method">How we compare ↗</a></header>
     <section className="intro"><div><p className="eyebrow">FOR RESTAURANT OWNERS & COMMERCIAL REALTORS</p><h1>Compare locations<br/>for your <em>restaurant.</em></h1></div><div className="intro-aside"><p>Search two or three addresses or neighborhoods, add your rent budget, and compare the locations for your restaurant.</p><span className="small-tag">NO ACCOUNT NEEDED · TRY THE SAMPLE</span></div></section>
     <div className={`mode-banner ${sample?'':'live'}`}><span className="status-dot"/><p><strong>{sample?'Sample comparison':'Your locations'}</strong> {sample?'The rents and scores are made up for this example. These locations are not advertised as available to rent.':'Choose a city, find at least two locations, then add your restaurant details.'}</p><button disabled={busy} type="button" onClick={()=>sample?startCustom():reset()}>{sample?'Start my comparison ↗':'Reset example'}</button></div>
     <div className="workspace"><section className="brief-panel" aria-labelledby="brief-title"><div className="section-top"><span className="step">01</span><h2 id="brief-title">Set up your comparison</h2></div>
