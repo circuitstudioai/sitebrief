@@ -8,6 +8,7 @@ import type {ResearchReport} from '@/lib/sites/research';
 export default function AreaResearch({result,area,reports,onReport,headingId="research-title"}:{result:Exploration;area:Area;reports:Record<string,ResearchReport>;onReport:(id:string,report:ResearchReport)=>void;headingId?:string}){
  const [busy,setBusy]=useState(false),[error,setError]=useState('');const controller=useRef<AbortController|null>(null);
  const candidate=reports[area.id];const report=reportMatchesArea(candidate,area)?releaseResearch(candidate):undefined;
+ const sources=report?visibleResearchSources(report):[];
  useEffect(()=>()=>{controller.current?.abort();controller.current=null;},[]);
  async function research(){
   controller.current?.abort();const request=new AbortController();controller.current=request;setBusy(true);setError('');
@@ -31,7 +32,7 @@ export default function AreaResearch({result,area,reports,onReport,headingId="re
  <h3>Web sources to check</h3>
  <p className="atlas-help">Sitebrief cannot yet verify that each source describes this exact area. Check its address and date. These links are not confirmed local findings.</p>
  {report?<><p className="atlas-research-date">Links retrieved {new Date(report.createdAt).toLocaleString()} · not the source publication date</p>
- {visibleResearchSources(report).length?<ol>{visibleResearchSources(report).map(({source,index})=><li key={index}><a href={source.url} target="_blank" rel="noreferrer">{source.title} ↗</a></li>)}</ol>:<p>No usable links were found. The Qloo shortlist is still available.</p>}
+ {sources.length?<><p>{sources.length} source links found. Showing the first {Math.min(5,sources.length)}; these are search results, not verified findings.</p><ol>{sources.slice(0,5).map(({source,index})=><li key={index}><a href={source.url} target="_blank" rel="noreferrer">{source.title} ↗</a></li>)}</ol>{sources.length>5&&<details className="atlas-source-log"><summary>Show {sources.length-5} more source links</summary><ol start={6}>{sources.slice(5).map(({source,index})=><li key={index}><a href={source.url} target="_blank" rel="noreferrer">{source.title} ↗</a></li>)}</ol></details>}</>:<p>No usable links were found. The Qloo shortlist is still available.</p>}
  {report.queries.length>0&&<details className="atlas-source-log"><summary>Searches used to find these links</summary><ul>{report.queries.map((query,index)=><li key={index}>{query}</li>)}</ul></details>}</>:!busy&&<p>No web search has been completed for this point.</p>}
  <div className="atlas-city-questions"><h3>Take these checks on your visit</h3><ol>{VISIT_CHECKS.map(question=><li key={question}>{question}</li>)}</ol></div>
  </section>;

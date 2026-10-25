@@ -13,13 +13,21 @@ const page=await browser.newPage({viewport:{width:1440,height:1100}});const erro
 try{
  if(fixture){const run=JSON.parse(fs.readFileSync(fixture,'utf8'));await page.route('**/api/scout',r=>r.fulfill({contentType:'text/event-stream',body:`data: ${JSON.stringify({type:'complete',value:run})}\n\n`}));}
  await page.goto(base,{waitUntil:'networkidle'});
+ const responseWait=page.waitForResponse(response=>response.url().endsWith('/api/scout')&&response.request().method()==='POST',{timeout:180000});
  await page.getByRole('button',{name:'Try Blue Bottle in Toronto'}).click();
+ const response=await responseWait;assert.equal(response.status(),200);
+ const frames=(await response.text()).split('\n\n').filter(frame=>frame.startsWith('data: ')).map(frame=>JSON.parse(frame.slice(6)));
+ const completed=frames.find(frame=>frame.type==='complete')?.value;assert(completed,'Expected a completed scouting run');
+ fs.writeFileSync(out+'/run.json',JSON.stringify(completed,null,2));
+ if(process.env.VERIFY_FRESH==='1'){assert(!fixture&&!completed.cached&&!completed.savedDemo,'Fresh live retrieval required; saved/cache is not acceptance');}
+ const providerMode={cached:Boolean(completed.cached),saved:Boolean(completed.savedDemo)};
  await page.locator('.atlas-area-card').first().waitFor({timeout:180000});
  await page.locator('.atlas-decision').waitFor({timeout:180000});
  if(!baseline){
   assert.equal(await page.locator('.atlas-verdict-label').filter({hasText:/^Maybe$/}).count(),0);
   assert((await page.locator('.atlas-verdict-label').filter({hasText:/Visit first|Joint first/}).count())>=1);
   assert.equal(await page.getByText('Local evidence unavailable; summary withheld.',{exact:true}).count(),0);
+  if((Object.values(completed.research)[0]?.sources?.length??0)>5){assert.equal(await page.getByText(/Show \d+ more source links/).count(),1);}
   await page.waitForFunction(()=>document.querySelectorAll('[data-site-id]').length===3);
   assert.deepEqual((await page.locator('.leaflet-tooltip').allTextContents()).sort(),['A','B','C']);
   const cards=page.locator('.atlas-area-card');
@@ -44,6 +52,6 @@ try{
   if(!baseline)assert.equal(axe.violations.length,0,JSON.stringify(states.at(-1)));
  }
  assert.deepEqual(errors,[]);
- fs.writeFileSync(out+'/summary.json',JSON.stringify({base,mode:fixture?'historical-run intercepted rendering test':'actual browser provider run',baseline,states,errors},null,2));
- console.log(JSON.stringify({base,mode:fixture?'historical replay':'live',baseline,states,errors}));
+ fs.writeFileSync(out+'/summary.json',JSON.stringify({base,mode:fixture?'historical-run intercepted rendering test':'actual browser provider run',baseline,providerMode,states,errors},null,2));
+ console.log(JSON.stringify({base,mode:fixture?'historical replay':'live',baseline,providerMode,states,errors}));
 }finally{await browser.close();}

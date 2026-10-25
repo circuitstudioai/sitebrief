@@ -34,7 +34,10 @@ Production base: main1a1206677573f971f2dc2ab303cb5364c4f23ed2. Queried Vercel pr
 - Changed local production-build replay: pointer/card selection, keyboard marker selection, background-toggle, PDF and notes downloads, no overflow, no tested axe violations at1440/390. Initial eager map-marker binding failed the keyboard contract; corrected add-event plus immediate binding handles Leaflet readiness.
 - PDF replay:3pages,19links, extracted text includes all areas, full checklist, method, limitations; exact-map links present. This is artifact/rendering proof with historical data, not a fresh provider run.
 - Raw artifacts: `/tmp/sitebrief-urgent-baseline/`, `/tmp/sitebrief-urgent-local/`, `/tmp/sitebrief-urgent-runtime-20261025.jsonl`. Reproducer: `scripts/verify-urgent-clarity.mjs <URL> [historical-run.json]`; omit fixture for actual browser provider retrieval. Configure optional module paths through environment.
-- Exact-head hosted Preview and live provider verification: pending at this checkpoint; append receipt before review handoff.
+- Hosted application head `b1be6d197624ee61ced56965ccc7789490a8d8c3`: immutable Preview `https://sitebrief-ak60wy7u3-circuitstudioais-projects.vercel.app`, deployment `dpl_HZtD3oUfhbc7RvEwZMhiiRuwEg5A`, Vercel checks SUCCESS. One fresh custom API scout passes identity/withholding/rank/source checks (22links, no cache/saved). One fresh actual browser Blue Bottle run passes all UI/export/desktop/mobile checks (32links, no cache/saved). Not a five-run geographic acceptance batch.
+- Exact Preview telemetry for both fresh runs: attempt1, source-discovery/sources-only, 6.895s and7.114s, zero retained citations, localityVerified=false. No wasted field-filling retry. Raw receipt `/tmp/sitebrief-urgent-preview-logs.jsonl`.
+- Live browser PDF:3pages, complete checklist/method/limits, current provider businesses and sources. Source-only acceptance is not confirmation that all32web links are local.
+- Final UI-only follow-up groups long source lists behind a five-link disclosure. Application research/ranking unchanged; final-head hosted rendering checks recorded in PR14. No fresh geographic claim inferred from earlier live calls.
 
 ## Not fixed or claimed
 
