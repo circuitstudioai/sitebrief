@@ -422,3 +422,6 @@ select{font:inherit;touch-action:manipulation;border:1px solid #bac3b8;backgroun
 .atlas-map.has-legend .leaflet-bottom{bottom:var(--map-legend-space,96px)}
 @media(min-width:1100px){.atlas-map-legend{top:12px;right:12px;bottom:auto;left:auto}.atlas-map.has-legend .leaflet-bottom{bottom:0}}
 @media(max-width:760px){.atlas-map-explain{flex-direction:column;align-items:stretch;padding:0 18px 12px}.atlas-evidence-toggle{width:100%}.atlas-map-legend{left:8px;max-width:calc(100% - 16px)}}
+
+/* Visit plans: keep the explanation readable without competing with place names. */
+.atlas-visit-overview{padding:22px 24px;margin:22px 0;background:#edf0e1;border-left:4px solid #244b38}.atlas-visit-overview h3{margin:0 0 8px;font-size:22px}.atlas-visit-overview p{max-width:80ch;line-height:1.65}.atlas-research li{line-height:1.65;margin-bottom:10px;overflow-wrap:anywhere}.atlas-research>a,.atlas-research p>a{display:inline-block;min-height:32px}.atlas-area-card{min-width:0}.atlas-area-card h3{overflow-wrap:anywhere}.atlas-map-legend{max-width:min(600px,calc(100% - 20px))}.atlas-map-explain p{max-width:65ch}

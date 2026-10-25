@@ -33,7 +33,7 @@ it('cannot leak a legacy local summary through agent streaming or completion',as
  const researchEvents=events.filter(event=>(event as {type:string}).type==='research');
  expect(researchEvents).toHaveLength(1);expect(JSON.stringify(researchEvents)).not.toContain('Published menu.');
  expect(run.research[top.id].text).toBe('');expect(run.research[top.id].citations).toEqual([]);
- expect(run.decisionNotice).toMatch(/Qloo ranking only/);
+ expect(run.decisionNotice).toMatch(/Qloo taste scores/);
 });
 it('cannot switch the final visit after researching the locked point',async()=>{
  const run=await runScout(brief,()=>{},generator('area-3'));

@@ -1,9 +1,11 @@
+import {visitPlan} from '@/lib/sites/visit-plan';
 import {areaVerdict} from '@/lib/sites/verdict';
 import type {Area,Exploration} from '@/lib/sites/explore';
 import type {ResearchReport} from '@/lib/sites/research-report';
 export function VerdictSummary({result,area,reports}:{result:Exploration;area:Area;reports:Record<string,ResearchReport>}){
  const verdict=areaVerdict(result,area,reports);
- return <div className="atlas-verdict"><span className={`atlas-verdict-label ${verdict.label.toLowerCase()}`}>{verdict.label}</span><span className="atlas-help">Scouting priority · not a business forecast</span><ul>{verdict.reasons.map(reason=><li key={reason}>{reason}</li>)}</ul>{verdict.sources.length>0&&<div className="atlas-citation-chips" aria-label="Cited local sources">{verdict.sources.slice(0,3).map((source,i)=><a key={source.url} href={source.url} target="_blank" rel="noreferrer">[{i+1}] {source.title} ↗</a>)}</div>}</div>;
+ const research=visitPlan(result,reports).areas.find(point=>point.id===area.id)?.research;
+ return <div className="atlas-verdict"><span className={`atlas-verdict-label ${verdict.label==='Also consider'?'maybe':'scout'}`}>{verdict.label}</span><span className="atlas-help">Visit priority, not a property rating</span><ul>{verdict.reasons.slice(0,1).map(reason=><li key={reason}>{reason}</li>)}</ul><p className="atlas-help">Web research: {research}</p>{verdict.sources.length>0&&<div className="atlas-citation-chips" aria-label="Cited local sources">{verdict.sources.slice(0,3).map((source,i)=><a key={source.url} href={source.url} target="_blank" rel="noreferrer">[{i+1}] {source.title} ↗</a>)}</div>}</div>;
 }
 export function SkipCards({result}:{result:Exploration}){
  const floor=result.brief.minimumPopularityPercentile??20;

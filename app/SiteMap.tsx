@@ -4,7 +4,7 @@ import type { Map as LeafletMap } from 'leaflet';
 import type { Cell, Site } from '@/lib/sites/schema';
 import 'leaflet/dist/leaflet.css';
 
-export default function SiteMap({ sites, cells, selected, center, onSelect, placing = false, onPlace, legendInset = 0 }: { sites: (Site & {verdict?:'Scout'|'Maybe'})[]; cells: Cell[]; selected: string; onSelect?: (id:string)=>void; center?: { latitude: number; longitude: number }; placing?: boolean; onPlace?: (latitude: number, longitude: number) => void; legendInset?: number }) {
+export default function SiteMap({ sites, cells, selected, center, onSelect, placing = false, onPlace, legendInset = 0 }: { sites: (Site & {verdict?:'Visit first'|'Joint first'|'Also consider'})[]; cells: Cell[]; selected: string; onSelect?: (id:string)=>void; center?: { latitude: number; longitude: number }; placing?: boolean; onPlace?: (latitude: number, longitude: number) => void; legendInset?: number }) {
   const container = useRef<HTMLDivElement>(null);
   const selection = useRef(onSelect);
   useEffect(() => { selection.current = onSelect; }, [onSelect]);
@@ -29,13 +29,12 @@ export default function SiteMap({ sites, cells, selected, center, onSelect, plac
         const t = hi === lo ? .5 : (metric(c) - lo) / (hi - lo);
         L.circleMarker([c.latitude, c.longitude], { radius: 5, stroke: false, fillColor: t > .66 ? '#294c34' : t > .33 ? '#8caa50' : '#d7dfb5', fillOpacity: .7 }).addTo(map!).bindTooltip(contrast?`Map point · contrast ${(c.contrast??0).toFixed(1)} percentile points · Qloo affinity ${c.affinity.toFixed(3)}`:`Map point · Qloo taste score ${c.affinity.toFixed(3)}`);
       });
-      const narrow = (container.current?.clientWidth ?? 999) < 560;
       sites.forEach((site, i) => {
         const letter = String.fromCharCode(65 + i);
         const label = document.createElement('span');
-        label.textContent = narrow ? letter : `${letter} · ${site.name.replace(/^[A-C] · /, '')}`;
-        const marker = L.circleMarker([site.latitude, site.longitude], { radius: site.id === selected ? 13 : 9, color: '#ffffff', weight: 3, fillColor: site.verdict==='Scout'?'#244b38':site.verdict==='Maybe'?'#9c741c':'#9d462b', fillOpacity: 1 }).addTo(map!).on('click',()=>selection.current?.(site.id)).bindTooltip(label, { permanent: true, direction: 'top', offset: [0, -12] });
-        marker.on('add', () => {
+        label.textContent = letter;
+        const marker = L.circleMarker([site.latitude, site.longitude], { radius: site.id === selected ? 13 : 9, color: '#ffffff', weight: 3, fillColor: site.verdict==='Visit first'||site.verdict==='Joint first'?'#244b38':site.verdict==='Also consider'?'#9c741c':'#9d462b', fillOpacity: 1 }).addTo(map!).on('click',()=>selection.current?.(site.id)).bindTooltip(label, { permanent: true, direction: 'top', offset: [0, -12] });
+        const bindMarker = () => {
           const element = marker.getElement();
           if (!element || !selection.current) return;
           element.setAttribute('data-site-id', site.id);
@@ -47,7 +46,9 @@ export default function SiteMap({ sites, cells, selected, center, onSelect, plac
             const key = (event as KeyboardEvent).key;
             if (key === 'Enter' || key === ' ') { event.preventDefault(); selection.current?.(site.id); }
           });
-        });
+        };
+        marker.on('add', bindMarker);
+        bindMarker();
       });
       if (sites.length) {
         const bounds = L.latLngBounds(sites.map(s => [s.latitude, s.longitude] as [number, number]));

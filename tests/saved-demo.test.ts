@@ -13,7 +13,7 @@ it('keeps recorded provenance and only the saved highlights, not a fabricated fu
  const first=savedPlaygroundDemo('live-unavailable');const second=savedPlaygroundDemo('live-incomplete');
  expect(first.cached).toBe(true);expect(first.savedDemo?.recordedAt).toBe(first.createdAt);expect(first.savedDemo!.originalPointCount).toBeGreaterThan(first.exploration.cells.length);expect(first.exploration.cells).toHaveLength(3);expect(first.assessment?.visitFirst).toBeTruthy();
  first.exploration.areas.length=0;expect(second.exploration.areas).toHaveLength(3);
- expect(hasCitedVisitResearch(second)).toBe(false);expect(researchForVisit(second)?.notice).toMatch(/Local evidence unavailable/);expect(researchForVisit(second)?.target?.areaId).toBe(second.assessment?.visitFirst);
+ expect(hasCitedVisitResearch(second)).toBe(false);expect(researchForVisit(second)?.notice).toMatch(/source locations are not verified/i);expect(researchForVisit(second)?.target?.areaId).toBe(second.assessment?.visitFirst);
 });
 it('recovers a failed canonical run only as a dated sources-only reference',async()=>{
  jest.mocked(buildDemoBrief).mockRejectedValue(new Error('Provider unavailable'));
@@ -42,7 +42,7 @@ it('reuses source discovery without claiming it is successful cited local resear
  for(let i=0;i<2;i++){
   const response=await POST(new Request('http://local/api/scout',{method:'POST',body:JSON.stringify({demo:true})}));
   const events=(await response.text()).split('\n\n').filter(Boolean).map(f=>JSON.parse(f.slice(6)));
-  const run=events.find(e=>e.type==='complete').value;expect(run.savedDemo).toBeUndefined();expect(Boolean(run.cached)).toBe(i===1);expect(hasCitedVisitResearch(run)).toBe(false);expect(researchForVisit(run)?.notice).toMatch(/Local evidence unavailable/);
+  const run=events.find(e=>e.type==='complete').value;expect(run.savedDemo).toBeUndefined();expect(Boolean(run.cached)).toBe(i===1);expect(hasCitedVisitResearch(run)).toBe(false);expect(researchForVisit(run)?.notice).toMatch(/source locations are not verified/i);
  }
  expect(runScout).toHaveBeenCalledTimes(1);
 });

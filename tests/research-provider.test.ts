@@ -12,7 +12,7 @@ it('returns source discovery, not even apparently grounded local claims, at the 
  const report=await researchArea(input);
  expect(report.text).toBe('');expect(report.citations).toEqual([]);expect(report.status).toBe('sources-only');
  expect(report.fields?.every(field=>field.status==='not-found'&&!field.text)).toBe(true);
- expect(report.sources).toEqual([{title:'Web source',url:'https://city.test/centre'}]);expect(report.notice).toMatch(/Local evidence unavailable/);
+ expect(report.sources).toEqual([{title:'Web source',url:'https://city.test/centre'}]);expect(report.notice).toMatch(/source locations are not verified/i);
 });
 it('reports rate limits without leaking provider details into the UI or logs',async()=>{
  generate.mockRejectedValue({status:429,message:'private-test-key in provider request'});
@@ -25,10 +25,11 @@ it('retries missing grounding within the existing two-attempt budget',async()=>{
  await expect(researchArea(input)).rejects.toMatchObject({code:'missing-grounding'});
  expect(generate).toHaveBeenCalledTimes(2);
 });
-it('retains earlier provider links if the summary retry times out',async()=>{
- generate.mockResolvedValueOnce({text:'Two units are required.',candidates:[{groundingMetadata:{groundingChunks:[{web:{uri:'https://example.com/city'}}]}}]}).mockRejectedValueOnce({name:'TimeoutError',message:'Timeout with private-test-key'});
- const report=await researchArea(input);expect(report.status).toBe('sources-only');expect(report.text).toBe('');expect(report.sources[0].url).toBe('https://example.com/city');
- expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('provider-timeout'));
+it('does not retry a usable source discovery to fill summaries that the release withholds',async()=>{
+ generate.mockResolvedValueOnce({text:'Two units are required.',candidates:[{groundingMetadata:{groundingChunks:[{web:{uri:'https://example.com/city'}}]}}]}).mockRejectedValueOnce({name:'TimeoutError'});
+ const report=await researchArea(input);expect(report.status).toBe('sources-only');expect(report.text).toBe('');
+ expect(report.sources[0].url).toBe('https://example.com/city');expect(generate).toHaveBeenCalledTimes(1);
+ expect(console.info).toHaveBeenCalledWith(expect.stringContaining('"localityVerified":false'));
 });
 it('does not run a later model call after cancellation',async()=>{
  const controller=new AbortController();controller.abort();
@@ -56,13 +57,7 @@ it('marks an unanchored structured field not found while retaining venue evidenc
  const report=await researchArea({...input,area:{...input.area,venues:[{name:"Mildred's Temple Kitchen"}]}});
  expect(report.text).toBe('');expect(report.summaryPolicy).toBe('withheld-locality-v1');expect(report.fields?.find(f=>f.key==='ACCESS')?.status).toBe('not-found');
 });
-it('uses retained findings before deciding whether a retry needs another extraction call',async()=>{
- const space='Dundas Street West has a commercial leasing listing.';const venue='Cafe Local publishes a menu on Dundas Street West.';const access='Dundas Street West has streetcar service.';
- const grounded=(text:string,facts:string[])=>({text,candidates:[{groundingMetadata:{groundingChunks:[{web:{uri:'https://city.test/transit'}},{web:{uri:'https://local.test/listing'}}],groundingSupports:facts.map((text,i)=>({segment:{text},groundingChunkIndices:[i%2]}))}}]});
- generate.mockResolvedValueOnce(grounded(`[SPACE]\n${space}\n[ACCESS]\nnot found\n[VENUES]\n${venue}\n[ACTIVITY]\nnot found`,[space,venue])).mockResolvedValueOnce({text:'{"fields":[]}'}).mockResolvedValueOnce(grounded(`[SPACE]\nnot found\n[ACCESS]\n${access}\n[VENUES]\nnot found\n[ACTIVITY]\nnot found`,[access]));
- const report=await researchArea({...input,area:{...input.area,name:'Dundas Street West'}});
- expect(report.fields?.filter(f=>f.status==='found')).toHaveLength(0);expect(report.sources).toHaveLength(2);expect(report.summaryPolicy).toBe('withheld-locality-v1');expect(generate).toHaveBeenCalledTimes(3);
- const extraction=JSON.parse(generate.mock.calls[1][0].contents);
- expect(extraction.fields.map(([key]:string[])=>key)).toEqual(['ACCESS','ACTIVITY']);
- const retry=JSON.parse(generate.mock.calls[2][0].contents);expect(retry.correction).toContain('only on the missing fields');
+it('drops unsafe and duplicate source URLs without trusting model-written links',async()=>{
+ generate.mockResolvedValue({text:'Use https://invented.test',candidates:[{groundingMetadata:{groundingChunks:[{web:{uri:'https://city.test/transit'}},{web:{uri:'https://city.test/transit'}},{web:{uri:'http://unsafe.test'}},{web:{uri:'javascript:alert(1)'}}]}}]});
+ const report=await researchArea(input);expect(report.sources).toEqual([{title:'Web source',url:'https://city.test/transit'}]);expect(generate).toHaveBeenCalledTimes(1);expect(report.text).toBe('');
 });
