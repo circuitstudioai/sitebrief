@@ -32,21 +32,20 @@ try{
  await page.locator('.atlas-decision').waitFor({timeout:15000});
  const area=run.exploration.areas.find(area=>area.id===run.assessment?.visitFirst);assert(area);
  assert.equal(await page.locator('.atlas-area-card').count(),run.exploration.areas.length);
- assert.equal(await page.locator('.atlas-research-fields section').count(),4);
- assert.equal(await page.locator('.atlas-research-fields').getByText('Local evidence unavailable; summary withheld.',{exact:true}).count(),4);
+ assert(await page.getByText('Low confidence · locality not verified').isVisible());
+ assert.equal(await page.getByText(/locality verified/i).count(),0);
  assert.equal(await page.locator('.atlas-verdict-label').filter({hasText:/^Scout$/}).count(),0);
- assert(await page.getByRole('heading',{name:'Questions for the City and landlord'}).isVisible());
+ assert(await page.getByRole('heading',{name:'Take these checks on your visit'}).isVisible());
  assert.equal(await page.locator('.atlas-search-suggestions').count(),0);
- const originalTexts=Object.values(run.research).flatMap(report=>[report.text,...(report.fields||[]).map(field=>field.text)]).filter(Boolean);
- const fieldsText=await page.locator('.atlas-research-fields').innerText();for(const text of originalTexts)assert(!fieldsText.includes(text));
+ const originalTexts=Object.values(run.research).flatMap(report=>[report.text,...(report.fields||[]).filter(field=>field.status==='found').map(field=>field.text)]).filter(Boolean);
+ if(originalTexts.length){assert(await page.locator('.atlas-local-notes').isVisible());const notesText=await page.locator('.atlas-local-notes').innerText();for(const text of originalTexts.slice(0,2))assert(notesText.includes(text.slice(0,40)));}
  const pdfWait=page.waitForEvent('download');await page.getByRole('button',{name:'Download one-page expansion brief'}).click();const pdf=await pdfWait;
  const bytes=fs.readFileSync(await pdf.path());assert.equal((await PDFDocument.load(bytes)).getPageCount(),1);
- assert(bytes.includes(Buffer.from('SUMMARY UNAVAILABLE')));assert(bytes.includes(Buffer.from(`Research point: ${area.latitude}, ${area.longitude}`)));
- for(const text of originalTexts)assert(!bytes.includes(Buffer.from(text)));
+ assert(bytes.includes(Buffer.from(`${area.latitude}, ${area.longitude}`)));
+ if(originalTexts.length)assert(bytes.includes(Buffer.from('low confidence')));
  fs.writeFileSync(out+'/brief.pdf',bytes);
  const notesWait=page.waitForEvent('download');await page.getByRole('button',{name:/Download scouting notes/}).click();const notesDownload=await notesWait;
- const notes=fs.readFileSync(await notesDownload.path(),'utf8');assert(notes.includes('Local evidence unavailable'));assert(notes.includes('QUESTIONS FOR THE CITY'));
- for(const text of originalTexts)assert(!notes.includes(text));
+ const notes=fs.readFileSync(await notesDownload.path(),'utf8');assert(notes.includes('ON YOUR VISIT'));assert(notes.match(/low confidence|not verified/i));
  assert(!notes.includes('"practicalEvidence"'));fs.writeFileSync(out+'/notes.txt',notes);
  if(run.savedDemo)assert(await page.getByText(/Saved demo, recorded/).isVisible());
  await page.addScriptTag({path:process.env.AXE_SCRIPT_PATH||load.resolve('axe-core/axe.min.js')});
@@ -54,6 +53,6 @@ try{
  assert.deepEqual(await audit(),[]);await page.screenshot({path:out+'/desktop.png',fullPage:true});
  await page.setViewportSize({width:390,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);assert.deepEqual(await audit(),[]);await page.screenshot({path:out+'/mobile.png',fullPage:true});
  await page.getByLabel('Area popularity').selectOption('50');assert.equal(await page.locator('.atlas-verdict-label').count(),0);assert.deepEqual(errors,[]);
- const receipt={url:base,checkedAt:new Date().toISOString(),mode:recorded?'historical-run replay (not fresh retrieval)':'actual browser request (no response substitution)',saved:Boolean(run.savedDemo),cached:Boolean(run.cached),point:area.id,checks:['Blue Bottle lead and secondary example','four withheld fields and tentative verdicts','source inspection and City questions','PDF one page and exact point; no local summary','notes withholding and provenance','desktop/mobile accessibility and no overflow','input changes invalidate old result'],pageErrors:errors};
+ const receipt={url:base,checkedAt:new Date().toISOString(),mode:recorded?'historical-run replay (not fresh retrieval)':'actual browser request (no response substitution)',saved:Boolean(run.savedDemo),cached:Boolean(run.cached),point:area.id,checks:['Blue Bottle lead and secondary example','unverified local notes with low-confidence label','source inspection and visit checks','PDF and notes keep disclaimer','desktop/mobile accessibility and no overflow','input changes invalidate old result'],pageErrors:errors};
  fs.writeFileSync(out+'/summary.json',JSON.stringify(receipt,null,2));console.log(JSON.stringify(receipt));
 }catch(error){await page.screenshot({path:out+'/failure.png',fullPage:true});console.log(JSON.stringify({error:error.message,body:(await page.locator('body').innerText()).slice(-2000)}));throw error;}finally{await browser.close();}

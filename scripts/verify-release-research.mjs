@@ -9,12 +9,12 @@ for(let index=0;index<Number(process.env.VERIFY_RUNS||5);index++){
  fs.writeFileSync(`${out}/run-${index+1}.json`,JSON.stringify(run||{status:response.status,raw},null,2));
  const point=run?.exploration.areas.find(area=>area.id===run.assessment?.visitFirst),report=run?.research[point?.id];
  const reports=frames.filter(frame=>frame.type==='research').map(frame=>frame.value).concat(Object.values(run?.research||{}));
- const withheld=reports.length>0&&reports.every(report=>report.summaryPolicy==='withheld-locality-v1'&&report.status==='sources-only'&&!report.text&&!report.citations.length&&!report.searchSuggestionsHtml&&report.fields?.length===4&&report.fields.every(field=>field.status==='not-found'&&!field.text&&!field.sourceIndices.length));
+ const honest=reports.length>0&&reports.every(report=>report.summaryPolicy==='unverified-locality-v1'&&report.confidence==='low'&&report.localityVerified===false&&Boolean(report.notice)&&!report.searchSuggestionsHtml);
  const matched=Boolean(point&&report?.target?.areaId===point.id&&report.target.latitude===point.latitude&&report.target.longitude===point.longitude);
  const top=run&&point&&run.exploration.areas.every(area=>(run.exploration.rankingMethod==='contrast'?area.contrast:area.affinity)<=(run.exploration.rankingMethod==='contrast'?point.contrast:point.affinity)+1e-9);
  const sources=new Set(report?.sources.map(source=>source.url)||[]).size;
- const row={run:index+1,checkedAt:new Date().toISOString(),status:response.status,withheld,matched,rankPreserved:Boolean(top),sourceLinks:sources,cached:Boolean(run?.cached),saved:Boolean(run?.savedDemo),error:frames.find(frame=>frame.type==='error')?.error};
- row.releasePass=Boolean(response.ok&&withheld&&matched&&top&&sources>=2&&!row.cached&&!row.saved&&!run.assessment.practicalEvidence);rows.push(row);console.log(JSON.stringify(row));
- fs.writeFileSync(out+'/summary.json',JSON.stringify({url:base,rows,passed:rows.filter(row=>row.releasePass).length,total:rows.length,scope:'source-only withholding/identity/ranking acceptance; NOT geographic accuracy or complete local research'},null,2));
+ const row={run:index+1,checkedAt:new Date().toISOString(),status:response.status,honest,matched,rankPreserved:Boolean(top),sourceLinks:sources,cached:Boolean(run?.cached),saved:Boolean(run?.savedDemo),error:frames.find(frame=>frame.type==='error')?.error};
+ row.releasePass=Boolean(response.ok&&honest&&matched&&top&&sources>=2&&!row.cached&&!row.saved&&!run.assessment.practicalEvidence);rows.push(row);console.log(JSON.stringify(row));
+ fs.writeFileSync(out+'/summary.json',JSON.stringify({url:base,rows,passed:rows.filter(row=>row.releasePass).length,total:rows.length,scope:'unverified-notes honesty/identity/ranking acceptance; NOT geographic accuracy or complete local research'},null,2));
 }
-assert(rows.every(row=>row.releasePass),'Every fresh run must preserve identity/rank and withhold local summaries, with source inspection links');
+assert(rows.every(row=>row.releasePass),'Every fresh run must preserve identity/rank and stamp local notes as unverified, with source inspection links');
