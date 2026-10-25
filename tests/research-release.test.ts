@@ -24,3 +24,12 @@ it('rechecks legacy cached decisions and rejects wrong-point reports while prese
  expect(released.assessment?.reason).not.toContain('Distant Centre');expect(released.assessment?.practicalEvidence).toBeUndefined();
  expect(released.assessment?.visitFirst).toBe(point.id);expect(released.cached).toBe(true);expect(released.savedDemo).toEqual(saved.savedDemo);
 });
+it('translates legacy progress without changing tool identity, status or evidence boundaries',()=>{
+ const run=savedBlueBottleDemo('live-incomplete');
+ run.steps=[{id:'legacy-research',tool:'research_area',title:'Old research title',status:'unavailable',areaId:run.assessment!.visitFirst!,durationMs:123,failureCode:'provider-timeout',notice:'Research priorities: SPACE → ACCESS. Focus: arrival. Distant Centre is nearby.'}];
+ const step=releaseScoutRun(run).steps[0];
+ expect(step).toMatchObject({id:'legacy-research',tool:'research_area',status:'unavailable',durationMs:123,failureCode:'provider-timeout',areaId:run.assessment!.visitFirst});
+ expect(step.notice).toContain('Property');expect(step.notice).toContain('Getting there');
+ expect(step.notice).not.toContain('Distant Centre');expect(step.notice).not.toContain('SPACE');
+ expect(releaseScoutRun(releaseScoutRun(run)).steps).toEqual([step]);
+});

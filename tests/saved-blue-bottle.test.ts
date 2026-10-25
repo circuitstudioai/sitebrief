@@ -7,7 +7,7 @@ it('withholds historical local summaries without losing the saved map, sources o
  const run=savedBlueBottleDemo('live-unavailable');const report=researchForVisit(run)!;
  expect(report.text).toBe('');expect(report.citations).toEqual([]);
  expect(report.fields?.every(field=>field.status==='not-found'&&!field.text&&!field.sourceIndices.length)).toBe(true);
- expect(report.status).toBe('sources-only');expect(report.notice).toMatch(/Local evidence unavailable/);
+ expect(report.status).toBe('sources-only');expect(report.notice).toMatch(/source locations are not verified/i);
  expect(report.sources.length).toBeGreaterThan(1);expect(run.assessment?.visitFirst).toBe(report.target?.areaId);
  expect(run.savedDemo?.recordedAt).toBe(run.createdAt);expect(run.exploration.areas.length).toBeGreaterThan(0);
  expect(run.assessment?.practicalEvidence).toBeUndefined();

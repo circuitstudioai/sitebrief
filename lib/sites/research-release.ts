@@ -1,10 +1,11 @@
+import {MAPPED_BUSINESS_CHECK_TITLE,MAPPED_BUSINESS_CHECK_NOTICE,SCOUT_STEP_TITLES,recordedPriorityCopy} from './scouting-copy';
 import type {ResearchReport} from './research-report';
 import type {ScoutRun} from './scout-agent';
 import {RESEARCH_FIELDS} from './structured-research';
 import {renderDecision} from './decision';
 import {reportMatchesArea} from './visit-research';
 
-export const LOCAL_EVIDENCE_NOTICE='Local evidence unavailable. Generated local summaries are withheld because source proximity has not been verified. These links are sources to inspect, not validated local findings.';
+export const LOCAL_EVIDENCE_NOTICE='Web source locations are not verified. Check each address and publication date before using a link. Local summaries are not available.';
 /** Release boundary, not geographic validation. Never trust a saved/client "verified" flag. */
 export function releaseResearch(report:ResearchReport):ResearchReport{
  const sources=report.sources.filter(source=>{try{const url=new URL(source.url);return url.protocol==='https:'&&!url.username&&!url.password;}catch{return false;}});
@@ -25,9 +26,14 @@ export function hasInspectionSources(report:ResearchReport|undefined){
 export function releaseScoutRun(run:ScoutRun):ScoutRun{
  const research=Object.fromEntries(Object.entries(run.research).filter(([id,report])=>reportMatchesArea(report,run.exploration.areas.find(area=>area.id===id))).map(([id,report])=>[id,releaseResearch(report)]));
  const choice=run.assessment?{visitFirst:run.assessment.visitFirst,reasonCode:'taste-evidence' as const,checkFocus:'general' as const}:null;
- const assessment=choice?{...renderDecision(choice,run.exploration,run.decisionOrigin),nextAction:'Inspect the source links and verify premises, access, permissions and operating conditions during a scouting visit.'}:null;
+ const assessment=choice?{...renderDecision(choice,run.exploration,run.decisionOrigin),nextAction:'Visit the shortlisted points. Check available units, access, rent and permission for your restaurant use.'}:null;
  return {...run,research,assessment,selection:run.selection?{visitFirst:run.selection.visitFirst,reasonCode:'taste-evidence',checkFocus:'general'}:undefined,
-  decisionNotice:'Cited web research is unavailable for this run. Visit order uses Qloo ranking only. Source links are for inspection, not validated local findings.',
-  steps:run.steps.map(step=>step.tool==='research_area'?{...step,notice:[step.notice?.match(/^Research priorities: (?:SPACE|ACCESS|VENUES|ACTIVITY| → )+\. Focus: (?:premises|arrival|neighbours|activity)\./)?.[0],LOCAL_EVIDENCE_NOTICE].filter(Boolean).join(' ')}:step),
+  decisionNotice:choice?.visitFirst&&research[choice.visitFirst]?.sources.length?'Visit order uses Qloo taste scores. Web links need an address and date check; they do not confirm that a property is suitable.':'Web research is unavailable for this point. The Qloo shortlist is still available. Visit to check the property, access and costs.',
+  steps:run.steps.map(step=>{
+   const displayed={...step,title:SCOUT_STEP_TITLES[step.tool]??step.title};
+   if(step.tool==='mapped_venues')return {...displayed,title:MAPPED_BUSINESS_CHECK_TITLE,notice:MAPPED_BUSINESS_CHECK_NOTICE};
+   if(step.tool==='research_area')return {...displayed,notice:[recordedPriorityCopy(step.notice),LOCAL_EVIDENCE_NOTICE].filter(Boolean).join(' ')};
+   return displayed;
+  }),
  };
 }
