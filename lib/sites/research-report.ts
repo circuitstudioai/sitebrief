@@ -2,7 +2,7 @@ import type {GroundingMetadata} from '@google/genai';
 import {assertNarrativeEvidence} from './evidence-guards';
 
 export type ResearchTarget={areaId?:string;latitude:number;longitude:number};
-export type ResearchReport={summaryPolicy?:'withheld-locality-v1';fields?:import("./structured-research").ResearchField[];text:string;createdAt:string;sources:{title:string;url:string}[];citations:{end:number;sourceIndices:number[]}[];queries:string[];searchSuggestionsHtml:string;status?:'cited'|'partial'|'sources-only';notice?:string;omittedSentences?:number;validationRules?:string[];target?:ResearchTarget};
+export type ResearchReport={summaryPolicy?:'withheld-locality-v1'|'unverified-locality-v1';confidence?:'low';localityVerified?:boolean;fields?:import("./structured-research").ResearchField[];text:string;createdAt:string;sources:{title:string;url:string}[];citations:{end:number;sourceIndices:number[]}[];queries:string[];searchSuggestionsHtml:string;status?:'cited'|'partial'|'sources-only';notice?:string;omittedSentences?:number;validationRules?:string[];target?:ResearchTarget};
 export type ResearchFailureCode='not-configured'|'provider-timeout'|'provider-rate-limit'|'provider-error'|'missing-grounding'|'validation-rejected'|'area-mismatch'|'cancelled';
 const messages:Record<ResearchFailureCode,string>={
  'not-configured':'Web research is not configured. Your Qloo map is unchanged.',

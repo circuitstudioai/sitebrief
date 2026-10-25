@@ -28,12 +28,13 @@ it('researches the locked highest-ranked visit even when the model requests a lo
  expect(researchArea).toHaveBeenCalledWith(expect.objectContaining({area:expect.objectContaining({latitude:top.latitude,longitude:top.longitude})}),undefined,['ACCESS','VENUES']);
  expect(Object.keys(run.research)).toEqual([top.id]);expect(run.assessment?.visitFirst).toBe(top.id);expect(run.steps.find(s=>s.tool==='research_area')?.notice).toMatch(/Getting there, Nearby businesses.*Getting there/);
 });
-it('cannot leak a legacy local summary through agent streaming or completion',async()=>{
+it('streams local notes as low-confidence and never treats them as verified locality',async()=>{
  const events:unknown[]=[];const run=await runScout(brief,event=>events.push(event),generator());
- const researchEvents=events.filter(event=>(event as {type:string}).type==='research');
- expect(researchEvents).toHaveLength(1);expect(JSON.stringify(researchEvents)).not.toContain('Published menu.');
- expect(run.research[top.id].text).toBe('');expect(run.research[top.id].citations).toEqual([]);
- expect(run.decisionNotice).toMatch(/Qloo taste scores/);
+ const researchEvents=events.filter(event=>(event as {type:string}).type==='research') as {value:{text:string;localityVerified?:boolean;confidence?:string;notice?:string}}[];
+ expect(researchEvents).toHaveLength(1);expect(researchEvents[0].value.text).toBe('Published menu.');
+ expect(researchEvents[0].value.localityVerified).toBe(false);expect(researchEvents[0].value.confidence).toBe('low');
+ expect(run.research[top.id].text).toBe('Published menu.');expect(run.research[top.id].localityVerified).toBe(false);
+ expect(run.assessment?.reason).not.toContain('Published menu.');expect(run.decisionNotice).toMatch(/unverified/i);
 });
 it('cannot switch the final visit after researching the locked point',async()=>{
  const run=await runScout(brief,()=>{},generator('area-3'));

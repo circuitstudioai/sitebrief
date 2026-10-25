@@ -26,3 +26,14 @@ it('exports only saved points while retaining their original letters and full-sh
  const text=visitNotes(run.exploration,{},run,[run.exploration.areas[1].id]);
  expect(text).toContain('B / ALSO CONSIDER');expect(text).not.toContain('A / VISIT FIRST');expect(text).toMatch(/Rank 2 of 3/);
 });
+it('exports matching local notes with a low-confidence disclaimer and no verified claim',()=>{
+ const id=run.assessment!.visitFirst!;
+ const report=run.research[id];
+ const plan=visitPlan(run.exploration,{[id]:report},run);
+ const area=plan.areas.find(point=>point.id===id)!;
+ expect(area.notes.length).toBeGreaterThan(0);expect(area.research).toMatch(/low-confidence/i);
+ expect(area.confidence).toBe('low');expect(area.localityVerified).toBe(false);expect(area.disclaimer).toMatch(/not verified/i);
+ expect(plan.limit).not.toMatch(/verified local/i);
+ const notes=visitNotes(run.exploration,{[id]:report},run);
+ expect(notes).toMatch(/low confidence; locality not verified/i);expect(notes).toContain(area.notes[0]);expect(notes).not.toMatch(/locality verified/i);
+});

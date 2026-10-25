@@ -29,4 +29,4 @@ Methods: [SCOUT_AGENT.md](SCOUT_AGENT.md). Architecture: [ARCHITECTURE.md](ARCHI
 
 ## October 24 bounded submission release
 
-The shipped research experience is source discovery, not verified local summaries. All four generated local summary fields are withheld until source-bound proximity validation is implemented. This includes saved/cache, UI and downloads. Source links are explicitly unvalidated inspection material. Qloo audience mapping, deterministic ranking and operator constraints remain usable; no claim of geographic research acceptance is made. See [release readiness](release-readiness.md).
+Generated local notes may appear when research produces them. They are always labelled low-confidence and unverified unless a later locality gate proves otherwise; this hackathon honesty model does not claim geographic acceptance. Source-bound proximity validation remains the separate draft follow-up. Source links stay unvalidated inspection material. Qloo audience mapping, deterministic ranking and operator constraints remain usable. See [release readiness](release-readiness.md).

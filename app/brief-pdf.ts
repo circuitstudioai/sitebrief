@@ -32,6 +32,7 @@ export async function downloadExpansionPdf(result:Exploration,run:ScoutRun|null,
   line(area.reasons[0]);line(`Nearby place label: ${area.address??'Not available'}`,9);
   link(`Open exact map point: ${area.latitude}, ${area.longitude}`,area.mapUrl);
   line(`Web research: ${area.research}${area.retrievedAt?`. Links retrieved ${area.retrievedAt}`:''}`,9);
+  if(area.notes.length){line('Local notes (low confidence; locality not verified):',9);for(const note of area.notes)line(`- ${note}`,9);if(area.disclaimer)line(area.disclaimer,9);}
   line('Nearby dining returned by Qloo (sample requested within 1 km, not every competitor):',9);
   if(!area.contextAvailable)line('Nearby-business data unavailable.',9);
   else if(!area.venues.length)line('No businesses returned. Check other sources.',9);

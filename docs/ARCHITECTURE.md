@@ -4,7 +4,7 @@ Next.js App Router, TypeScript and React on Vercel. Leaflet displays map points;
 
 ## Request flow
 
-Browser → `/api/scout` → bounded Gemini function calls → Qloo exploration/profile/compare → Google Search source discovery → local-summary withholding → structured decision codes → deterministic rank facts → SSE events and final brief.
+Browser → `/api/scout` → bounded Gemini function calls → Qloo exploration/profile/compare → Google Search notes + source discovery → unverified-summary honesty stamp → structured decision codes → deterministic rank facts → SSE events and final brief.
 
 Server code locks the highest-ranked eligible point immediately after exploration, preserving explicit ties. Research execution and the final model schema use only that point. `lib/sites/visit-research.ts` requires matching IDs and exact coordinates; UI/export/cache/saved recovery use the same check. The model chooses research priorities/focus, a nearby-audience comparison target and visit check codes, not a new visit candidate. `lib/sites/decision.ts` renders the actual shortlist rank and tie status.
 
@@ -18,7 +18,7 @@ Server code locks the highest-ranked eligible point immediately after exploratio
 | `lib/sites/explore.ts` | Radius, outlet exclusions, popularity/taste screens and separated points |
 | `lib/sites/profile.ts` | Audience tags, signed demographic affinity, brands and venue comparison |
 | `lib/sites/research.ts` | Source retrieval, bounded retries/deadline and safe diagnostic events |
-| `lib/sites/research-release.ts` | Whole-summary withholding and source-inspection acceptance across live/saved/cache/UI/exports |
+| `lib/sites/research-release.ts` | Unverified-summary honesty stamp and source-inspection acceptance across live/saved/cache/UI/exports |
 | `lib/sites/research-report.ts` | Legacy recorded-report rechecks and safe failure categories; new live research uses structured-research.ts |
 | `lib/sites/visit-research.ts` | Final-visit research identity by ID and coordinates across consumers |
 | `lib/sites/decision.ts` | Strict decision-code contract and deterministic rank/tie wording |
