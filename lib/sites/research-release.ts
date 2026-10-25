@@ -1,4 +1,4 @@
-import {MAPPED_BUSINESS_CHECK_TITLE,MAPPED_BUSINESS_CHECK_NOTICE} from './scouting-copy';
+import {MAPPED_BUSINESS_CHECK_TITLE,MAPPED_BUSINESS_CHECK_NOTICE,SCOUT_STEP_TITLES,recordedPriorityCopy} from './scouting-copy';
 import type {ResearchReport} from './research-report';
 import type {ScoutRun} from './scout-agent';
 import {RESEARCH_FIELDS} from './structured-research';
@@ -29,6 +29,11 @@ export function releaseScoutRun(run:ScoutRun):ScoutRun{
  const assessment=choice?{...renderDecision(choice,run.exploration,run.decisionOrigin),nextAction:'Visit the shortlisted points. Check available units, access, rent and permission for your restaurant use.'}:null;
  return {...run,research,assessment,selection:run.selection?{visitFirst:run.selection.visitFirst,reasonCode:'taste-evidence',checkFocus:'general'}:undefined,
   decisionNotice:choice?.visitFirst&&research[choice.visitFirst]?.sources.length?'Visit order uses Qloo taste scores. Web links need an address and date check; they do not confirm that a property is suitable.':'Web research is unavailable for this point. The Qloo shortlist is still available. Visit to check the property, access and costs.',
-  steps:run.steps.map(step=>step.tool==='mapped_venues'?{...step,title:MAPPED_BUSINESS_CHECK_TITLE,notice:MAPPED_BUSINESS_CHECK_NOTICE}:step.tool==='research_area'?{...step,notice:[step.notice?.match(/^Research priorities: (?:SPACE|ACCESS|VENUES|ACTIVITY| → )+\. Focus: (?:premises|arrival|neighbours|activity)\./)?.[0],LOCAL_EVIDENCE_NOTICE].filter(Boolean).join(' ')}:step),
+  steps:run.steps.map(step=>{
+   const displayed={...step,title:SCOUT_STEP_TITLES[step.tool]??step.title};
+   if(step.tool==='mapped_venues')return {...displayed,title:MAPPED_BUSINESS_CHECK_TITLE,notice:MAPPED_BUSINESS_CHECK_NOTICE};
+   if(step.tool==='research_area')return {...displayed,notice:[recordedPriorityCopy(step.notice),LOCAL_EVIDENCE_NOTICE].filter(Boolean).join(' ')};
+   return displayed;
+  }),
  };
 }

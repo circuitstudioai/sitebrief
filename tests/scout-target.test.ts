@@ -26,7 +26,7 @@ function generator(finalId='area-1'){
 it('researches the locked highest-ranked visit even when the model requests a lower area',async()=>{
  const run=await runScout(brief,()=>{},generator());
  expect(researchArea).toHaveBeenCalledWith(expect.objectContaining({area:expect.objectContaining({latitude:top.latitude,longitude:top.longitude})}),undefined,['ACCESS','VENUES']);
- expect(Object.keys(run.research)).toEqual([top.id]);expect(run.assessment?.visitFirst).toBe(top.id);expect(run.steps.find(s=>s.tool==='research_area')?.notice).toMatch(/ACCESS → VENUES.*arrival/);
+ expect(Object.keys(run.research)).toEqual([top.id]);expect(run.assessment?.visitFirst).toBe(top.id);expect(run.steps.find(s=>s.tool==='research_area')?.notice).toMatch(/Getting there, Nearby businesses.*Getting there/);
 });
 it('cannot leak a legacy local summary through agent streaming or completion',async()=>{
  const events:unknown[]=[];const run=await runScout(brief,event=>events.push(event),generator());
