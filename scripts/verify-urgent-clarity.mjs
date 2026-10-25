@@ -35,7 +35,7 @@ try{
   await page.waitForFunction(()=>document.querySelector('[data-site-id="area-2"]')?.getAttribute('aria-pressed')==='true');
   await page.locator('[data-site-id="area-1"]').focus();await page.keyboard.press('Enter');
   await page.waitForFunction(()=>document.querySelector('[data-site-id="area-1"]')?.getAttribute('aria-pressed')==='true');
-  const toggle=page.getByRole('button',{name:'Show background scoring points'});await toggle.click();assert.equal(await toggle.getAttribute('aria-pressed'),'true');await toggle.click();
+  const view=page.getByRole('group',{name:'Map view',exact:true});const shortlist=view.getByRole('button',{name:'Shortlist only',exact:true}),scoring=view.getByRole('button',{name:'Shortlist + scoring points',exact:true});assert.equal(await shortlist.getAttribute('aria-pressed'),'true');await scoring.click();assert.equal(await scoring.getAttribute('aria-pressed'),'true');await shortlist.click();assert.equal(await shortlist.getAttribute('aria-pressed'),'true');
   const pdfWait=page.waitForEvent('download');await page.getByRole('button',{name:'Download visit checklist PDF'}).click();const pdf=await pdfWait;await pdf.saveAs(out+'/visit-plan.pdf');
   const document=await PDFDocument.load(fs.readFileSync(out+'/visit-plan.pdf'));assert(document.getPageCount()>=1);
   const notesWait=page.waitForEvent('download');await page.getByRole('button',{name:/Download.*notes/}).first().click();const notes=await notesWait;await notes.saveAs(out+'/notes.txt');
