@@ -66,3 +66,7 @@ Current follow-up evidence belongs in `docs/quality/`. Older dated JSON/image ar
 ## Limits
 
 Taste/popularity are not measured footfall, demand, rents, available units, revenue or success. Nearby samples do not establish a market gap. Source citations are not a universal accuracy guarantee. Verify premises, access, permissions and operating economics in person. No customer validation or study-cost savings are claimed.
+
+## Visitor and usage counts
+
+See [analytics setup and measurement definitions](docs/ANALYTICS.md). Production visitor/page counts use Vercel Web Analytics. Fixed, anonymous feature-action counts use the existing Free Redis store, without a Pro upgrade. Preview traffic, user-entered data and session replay are excluded. Collection starts after the instrumented production release; counts are not customer validation.

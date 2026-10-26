@@ -9,10 +9,12 @@
     "lint": "eslint",
     "test": "jest",
     "test:watch": "jest --watch",
-    "qloo:smoke": "tsx scripts/qloo-smoke.ts"
+    "qloo:smoke": "tsx scripts/qloo-smoke.ts",
+    "analytics:report": "tsx scripts/analytics-report.ts"
   },
   "dependencies": {
     "@google/genai": "^1.30.0",
+    "@vercel/analytics": "^2.0.1",
     "jspdf": "^4.2.1",
     "leaflet": "^1.9.4",
     "next": "16.4.2",
