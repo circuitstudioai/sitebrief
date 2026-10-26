@@ -28,7 +28,7 @@ redis.call('EXPIREAT',KEYS[1],reset)
 return {1,used,reset,now}
 `;
 
-function configuration(){
+export function redisConfiguration(){
  // A partially supplied alias must fail closed, not silently select a different database.
  const pairs=[['SITEBRIEF_REDIS_REST_URL','SITEBRIEF_REDIS_REST_TOKEN'],['UPSTASH_REDIS_REST_URL','UPSTASH_REDIS_REST_TOKEN'],['KV_REST_API_URL','KV_REST_API_TOKEN']];
  const pair=pairs.find(([url,token])=>process.env[url]?.trim()||process.env[token]?.trim());
@@ -42,7 +42,7 @@ function configuration(){
  return {origin,token};
 }
 export async function reserveLiveAnalysis(){
- const {origin,token}=configuration();
+ const {origin,token}=redisConfiguration();
  const limit=DEFAULT_DAILY_LIMIT;
  const key=`sitebrief:budget:v2:${process.env.VERCEL_ENV==='production'?'production':'preview'}`;
  let result:unknown;

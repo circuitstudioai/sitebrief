@@ -1,0 +1,36 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import {createRequire} from 'node:module';
+const {chromium}=createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE_PATH||'playwright-core');
+import {savedBlueBottleDemo} from '../lib/sites/saved-blue-bottle';
+const base=process.argv[2]||'http://localhost:43134';
+const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+const events=[];
+try{
+ const page=await browser.newPage({viewport:{width:1280,height:900}});
+ await page.route('**/_vercel/insights/script.js',route=>route.fulfill({contentType:'application/javascript',body:'/* provider transport mocked for local behavior checks */'}));
+ await page.route('**/api/usage',async route=>{const data=route.request().postDataJSON();assert.deepEqual(Object.keys(data).sort(),['event','mode','workflow']);events.push(data);await route.fulfill({status:202,body:''});});
+ await page.route('**/api/scout',route=>route.fulfill({contentType:'text/event-stream',body:`data: ${JSON.stringify({type:'complete',value:savedBlueBottleDemo('live-unavailable')})}\n\n`}));
+ await page.goto(base,{waitUntil:'networkidle'});
+ await page.waitForFunction(()=>window.sitebriefUsageEnabled===true);
+ await page.getByRole('button',{name:'Try Blue Bottle in Toronto'}).click();
+ await page.getByRole('button',{name:'Download visit checklist PDF'}).waitFor();
+ const pdf=page.waitForEvent('download');await page.getByRole('button',{name:'Download visit checklist PDF'}).click();await pdf;
+ const notes=page.waitForEvent('download');await page.getByRole('button',{name:/Download.*notes/}).first().click();await notes;
+ await page.waitForFunction(()=>!document.querySelector('button[disabled]')) .catch(()=>{});
+ await page.goto(base+'/compare',{waitUntil:'networkidle'});
+ await page.getByRole('button',{name:/Compare.*locations|Compare locations|Compare sample/i}).last().click();
+ await page.getByRole('button',{name:/Download comparison/}).waitFor();
+ const comparison=page.waitForEvent('download');await page.getByRole('button',{name:/Download comparison/}).click();await comparison;
+ await page.route('**/api/sites',r=>r.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'Controlled analytics failure check'})}));
+ await page.getByRole('button',{name:/Compare.*locations|Compare locations|Compare sample/i}).last().click();
+ await page.getByText('Controlled analytics failure check',{exact:true}).waitFor();
+ await page.waitForTimeout(150);
+ for(const e of ['analysis_started','analysis_completed','pdf_downloaded','notes_downloaded'])assert(events.some(x=>x.workflow==='scout'&&x.event===e&&x.mode==='sample'),e+' scout missing');
+ for(const e of ['analysis_started','analysis_completed','analysis_failed','notes_downloaded'])assert(events.some(x=>x.workflow==='compare'&&x.event===e&&x.mode==='sample'),e+' compare missing');
+ const dnt=await browser.newPage();let dntCalls=0;dnt.on('request',r=>{if(r.url().includes('/api/usage')||r.url().includes('/_vercel/insights'))dntCalls++;});
+ await dnt.addInitScript(()=>Object.defineProperty(navigator,'doNotTrack',{value:'1'}));
+ await dnt.goto(base+'/compare',{waitUntil:'networkidle'});await dnt.getByRole('button',{name:/Compare.*locations|Compare locations|Compare sample/i}).last().click();await dnt.getByRole('button',{name:/Download comparison/}).waitFor();await dnt.waitForTimeout(100);assert.equal(dntCalls,0);
+ const receipt={passed:true,providerTransport:'mocked',analysis:'saved scouting replay and deterministic sample comparison; no paid provider calls',eventCount:events.length,events,dntCalls};
+ fs.writeFileSync('/tmp/sitebrief-analytics-browser.json',JSON.stringify(receipt,null,2));console.log(JSON.stringify(receipt));
+}finally{await browser.close();}

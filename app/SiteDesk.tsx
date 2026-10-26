@@ -1,4 +1,5 @@
 'use client';
+import {trackUsage} from '@/lib/analytics';
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import FeatureNav from './FeatureNav';
@@ -67,11 +68,11 @@ export default function SiteDesk() {
     setPlacementNotice(`${site.name} moved. Coordinates updated in the form. Run a new comparison for this location.`);
   }
   function reset(){edit(structuredClone(sampleBrief));setReferenceText(sampleBrief.references.join(', '));setSelected('a');}
-  async function run(e:React.FormEvent){e.preventDefault();if(!sample&&(!cityReady||brief.sites.some(s=>!located.includes(s.id)))){setError(!cityReady?'Choose your city first. Search and select a result, or use the city name with manual coordinates.':'Find or place each location before comparing. Locations without a confirmed pin are marked below.');return;}setPlacing(false);setBusy(true);setReferenceChoice(null);setError('');setResult(null);setCopied('');try{
+  async function run(e:React.FormEvent){e.preventDefault();if(!sample&&(!cityReady||brief.sites.some(s=>!located.includes(s.id)))){setError(!cityReady?'Choose your city first. Search and select a result, or use the city name with manual coordinates.':'Find or place each location before comparing. Locations without a confirmed pin are marked below.');return;}trackUsage('analysis_started','compare',sample?'sample':'custom');setPlacing(false);setBusy(true);setReferenceChoice(null);setError('');setResult(null);setCopied('');try{
     const response=await fetch('/api/sites',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(brief),signal:AbortSignal.timeout(55000)});
-    const data=await response.json();if(data.referenceChoice)setReferenceChoice(data.referenceChoice);if(!response.ok)throw new Error(data.error||'We could not finish the comparison. Please try again.');setResult(data);
-  }catch(e){setError(e instanceof Error&&e.name==='TimeoutError'?'The comparison took too long. Your entries are still here. Please try again.':e instanceof Error?e.message:'We could not finish the comparison. Please try again.');}finally{setBusy(false);}}
-  function download(){if(!result)return;const url=URL.createObjectURL(new Blob([memo(result)],{type:'text/plain;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='sitebrief-comparison.txt';a.click();URL.revokeObjectURL(url);}
+    const data=await response.json();if(data.referenceChoice)setReferenceChoice(data.referenceChoice);if(!response.ok)throw new Error(data.error||'We could not finish the comparison. Please try again.');setResult(data);trackUsage('analysis_completed','compare',sample?'sample':'custom');
+  }catch(e){trackUsage('analysis_failed','compare',sample?'sample':'custom');setError(e instanceof Error&&e.name==='TimeoutError'?'The comparison took too long. Your entries are still here. Please try again.':e instanceof Error?e.message:'We could not finish the comparison. Please try again.');}finally{setBusy(false);}}
+  function download(){if(!result)return;const url=URL.createObjectURL(new Blob([memo(result)],{type:'text/plain;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='sitebrief-comparison.txt';a.click();trackUsage('notes_downloaded','compare',sample?'sample':'custom');URL.revokeObjectURL(url);}
   async function copy(){if(!result)return;try{await navigator.clipboard.writeText(memo(result));setCopied('Comparison copied.');}catch{setCopied('Copying is unavailable in this browser. Use Download comparison instead.');}}
   return <main id="main-content"><a className="skip-link" href="#brief-title">Skip to the comparison form</a>
     <header className="masthead"><Link className="wordmark" href="/"><span className="mark" aria-hidden="true">s.</span>sitebrief<span className="wordmark-note" aria-hidden="true">RESTAURANT LOCATION COMPARISON</span></Link><FeatureNav active="compare"/><a className="header-link" href="#method">How we compare ↗</a></header>

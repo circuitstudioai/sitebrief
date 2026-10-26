@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { DM_Sans, Instrument_Serif } from 'next/font/google';
 import './globals.css';
+import SiteAnalytics from './SiteAnalytics';
 const body = DM_Sans({ variable: '--font-body', subsets: ['latin'] });
 const display = Instrument_Serif({ variable: '--font-display', weight: '400', subsets: ['latin'] });
 export const metadata: Metadata = {
@@ -15,4 +16,4 @@ export const metadata: Metadata = {
     url: '/', type: 'website',
   },
 };
-export default function RootLayout({ children }: LayoutProps<'/'>) { return <html lang="en" className={`${body.variable} ${display.variable}`}><body>{children}</body></html>; }
+export default function RootLayout({ children }: LayoutProps<'/'>) { return <html lang="en" className={`${body.variable} ${display.variable}`}><body>{children}<SiteAnalytics enabled={process.env.VERCEL_ENV==='production'}/></body></html>; }
